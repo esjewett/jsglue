@@ -4,19 +4,16 @@ require 'uri'
 class Handler
   
   def initialize
-    @boundary = "TiDHew86xk"
   end
   
   def call(env)
     
-    @target = env['QUERY_STRING'].to_s.slice(/url=[^&]*&?/)
-    @target.chomp!('&')
-    @target.reverse!.chomp!('=lru').reverse!
-                              
-    url = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d')
+    boundary = "TiDHew86xk"
+    
+    url = URI.parse(extract_target_url_from_query_string(env))
     req = Net::HTTP::Post.new(url.path + '?' + url.query)
-    req.body = encode_multipartformdata({'title'=>'Test title', 'body'=>'Test body'})
-    req.set_content_type('multipart/form-data; boundary=' + @boundary)
+    req.body = encode_multipartformdata(boundary, {'title'=>'Test title', 'body'=>'Test body'})
+    req.set_content_type('multipart/form-data; boundary=' + boundary)
     res = Net::HTTP.new(url.host, url.port).start {|http| http.request(req) }
     
     [
@@ -24,19 +21,26 @@ class Handler
       {             # Response headers
         'Content-Type' => 'text/html'
       },
-      [URI.unescape(url.path + '?' + url.query) + '-' + res.body]       # Response body 
+      [res.body]       # Response body 
     ]
   end
   
-  def encode_multipartformdata(parameters = {})
+  def encode_multipartformdata(boundary, parameters = {})
     ret = String.new
     parameters.each do |key, value|
       unless value.empty?
-        ret << "\r\n--" << @boundary << "\r\n"
+        ret << "\r\n--" << boundary << "\r\n"
         ret << "Content-Disposition: form-data; name=\"#{key}\"\r\n\r\n"
         ret << value
       end
     end
-    ret << "\r\n--" << @boundary << "--\r\n"
+    ret << "\r\n--" << boundary << "--\r\n"
   end 
+  
+  def extract_target_url_from_query_string(e)
+    t = e['QUERY_STRING'].to_s.slice(/url=[^&]*&?/)
+    t.chomp!('&')
+    t.reverse!.chomp!('=lru').reverse!
+  end
+  
 end
