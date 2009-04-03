@@ -1,5 +1,6 @@
 require 'net/http'
 require 'uri'
+require 'johnson'
 
 class Handler
   
@@ -11,17 +12,31 @@ class Handler
     boundary = "TiDHew86xk"
     
     url = URI.parse(extract_target_url_from_query_string(env))
-    req = Net::HTTP::Post.new(url.path + '?' + url.query)
+    
+    req = case env['REQUEST_METHOD']
+    when 'GET' then Net::HTTP::Post.new(url.path + '?' + url.query)
+    when 'POST' then Net::HTTP::Post.new(url.path + '?' + url.query)
+    when 'PUT' then Net::HTTP::Put.new(url.path + '?' + url.query)
+    when 'DELETE' then Net::HTTP::Delete.new(url.path + '?' + url.query)
+    end
+
+    rt = Johnson::Runtime.new
+    rt.evaluate('Ruby = null')
+    
     req.body = encode_multipartformdata(boundary, {'title'=>'Test title', 'body'=>'Test body'})
-    req.set_content_type('multipart/form-data; boundary=' + boundary)
-    res = Net::HTTP.new(url.host, url.port).start {|http| http.request(req) }
+    #req.set_content_type('multipart/form-data; boundary=' + boundary)
+
+    rt[:req] = req
+    rt.evaluate("req.set_content_type();")
+
+    #res = Net::HTTP.new(url.host, url.port).start {|http| http.request(req) }
     
     [
       200,          # Status code
       {             # Response headers
         'Content-Type' => 'text/html'
       },
-      [res.body]       # Response body 
+      [Johnson.evaluate("4 + 4").to_s]       # Response body 
     ]
   end
   
