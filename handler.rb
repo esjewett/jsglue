@@ -11,7 +11,17 @@ class Handler
     
     boundary = "TiDHew86xk"
     
-    url = URI.parse(extract_target_url_from_query_string(env))
+    if env['QUERY_STRING'].to_s.slice(/url=[^&]*&?/)
+      url = URI.parse(extract_target_url_from_query_string(env))
+    else
+      return [
+        400,
+        {
+          'Content-Type' => 'text/html'
+        },
+        ["Bad url - need to provide ?url="]
+      ]
+    end
     
     req = case env['REQUEST_METHOD']
     when 'GET' then Net::HTTP::Post.new(url.path + '?' + url.query)
@@ -21,13 +31,12 @@ class Handler
     end
 
     rt = Johnson::Runtime.new
-    rt.evaluate('Ruby = null')
     
     req.body = encode_multipartformdata(boundary, {'title'=>'Test title', 'body'=>'Test body'})
     #req.set_content_type('multipart/form-data; boundary=' + boundary)
 
     rt[:req] = req
-    rt.evaluate("req.set_content_type();")
+    #rt.evaluate("req.set_content_type();")
 
     #res = Net::HTTP.new(url.host, url.port).start {|http| http.request(req) }
     
@@ -36,7 +45,7 @@ class Handler
       {             # Response headers
         'Content-Type' => 'text/html'
       },
-      [Johnson.evaluate("4 + 4").to_s]       # Response body 
+      [rt.evaluate('req').body.to_s]       # Response body 
     ]
   end
   
@@ -53,9 +62,11 @@ class Handler
   end 
   
   def extract_target_url_from_query_string(e)
-    t = e['QUERY_STRING'].to_s.slice(/url=[^&]*&?/)
-    t.chomp!('&')
-    t.reverse!.chomp!('=lru').reverse!
+    if e['QUERY_STRING'].length > 0
+      t = e['QUERY_STRING'].to_s.slice(/url=[^&]*&?/)
+      t.chomp!('&')
+      t.reverse!.chomp!('=lru').reverse!
+    end
   end
   
 end
