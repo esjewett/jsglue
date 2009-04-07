@@ -35,8 +35,11 @@ class Handler
     req.body = encode_multipartformdata(boundary, {'title'=>'Test title', 'body'=>'Test body'})
     #req.set_content_type('multipart/form-data; boundary=' + boundary)
 
-    rt[:req] = req
-    #rt.evaluate("req.set_content_type();")
+    rt[:set_content_type] = lambda { |x| req.set_content_type(x) }
+    rt[:encode_multipartformdata] = lambda { |b, p[]| encode_multipartformdata(b, p) }
+    rt[:body] = lambda { |x| req.body = x }
+    #rt.evaluate("req.set_content_type('multipart/form-data; boundary=TiDHew86xk');")
+    rt.evaluate('set_content_type("multipart/form-data; boundary=TiDHew86xk");')
 
     #res = Net::HTTP.new(url.host, url.port).start {|http| http.request(req) }
     
@@ -44,8 +47,8 @@ class Handler
       200,          # Status code
       {             # Response headers
         'Content-Type' => 'text/html'
-      },
-      [rt.evaluate('req').body.to_s]       # Response body 
+      }, 
+      [req.content_type]
     ]
   end
   
