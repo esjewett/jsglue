@@ -2,8 +2,13 @@ require 'rubygems'
 require 'sinatra'
 require 'johnson'
 require 'net/http'
+require 'dm-core'
+require 'lib/job'
 
-get '/*' do  
+DataMapper.setup(:default, 'sqlite3::memory:')
+DataMapper.auto_migrate!
+
+get '/*' do 
   handle_request(env)
 end
 
@@ -25,11 +30,17 @@ end
 
 helpers do
   def handle_request(env)
+    
+    # Drop all "rack." keys from env Hash (drops StringIO types that don't marshal)
+    env.delete_if { |k,v| k =~ /rack./}
+
     response_body = String.new
     
     # Store request on the stack to be processed.
 
-    # TO IMPLEMENT
+    job = Job.new
+    job.environment = env
+    job.save
 
     # Determine the response (could be dynamic eventually)
     
