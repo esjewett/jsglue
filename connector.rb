@@ -1,27 +1,49 @@
 require 'rubygems'
 require 'sinatra'
 require 'johnson'
-require 'net/http'
 require 'dm-core'
+require 'json/pure'
 require 'lib/job'
+require 'lib/processor'
 
 DataMapper.setup(:default, 'sqlite3::memory:')
 DataMapper.auto_migrate!
 
-get '/*' do 
-  handle_request(env)
+get '/processor/:id' do
+  Processor.all(:id => params[:id]).to_s
+end
+
+post '/processor' do
+
+  begin
+    processor_hash = JSON.parse(request.body.read)
+    
+    processor = Processor.new
+  
+    processor.path = processor_hash['path']
+    processor.script = processor_hash['script']
+  
+    processor.save
+  rescue
+    halt 400, 'Invalid JSON'
+  end
+    
+end
+
+get %r{/([\w]+)} do #/(\?.*)?} do
+  if Processor.all(:path => params[:captures]).length > 0
+    handle_request(env)
+  else
+    halt 400, 'Invalid path.'
+  end
 end
 
 post '/*' do
-  handle_request(env)
-end
-
-put '/*' do
-  handle_request(env)
-end
-
-delete '/*' do
-  handle_request(env)
+  if Processor.all(:path => params[:captures]).length > 0
+    handle_request(env)
+  else
+    halt 400, 'Invalid path.'
+  end
 end
 
 error do
