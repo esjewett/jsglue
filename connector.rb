@@ -14,24 +14,20 @@ get '/processor/:id' do
 end
 
 post '/processor' do
-
   begin
     processor_hash = JSON.parse(request.body.read)
-    
     processor = Processor.new
-  
     processor.path = processor_hash['path']
     processor.script = processor_hash['script']
-  
+    processor.response_script = processor_hash['response_script']
     processor.save
   rescue
     halt 400, 'Invalid JSON'
   end
-    
 end
 
-get %r{/([\w]+)} do #/(\?.*)?} do
-  if Processor.all(:path => params[:captures]).length > 0
+get '/*' do
+  if Processor.first(:path => env['PATH_INFO'])
     handle_request(env)
   else
     halt 400, 'Invalid path.'
@@ -39,7 +35,7 @@ get %r{/([\w]+)} do #/(\?.*)?} do
 end
 
 post '/*' do
-  if Processor.all(:path => params[:captures]).length > 0
+  if Processor.first(:path => env['PATH_INFO'])
     handle_request(env)
   else
     halt 400, 'Invalid path.'
@@ -52,7 +48,7 @@ end
 
 helpers do
   def handle_request(env)
-    
+
     # Drop all "rack." keys from env Hash (drops StringIO types that don't marshal)
     env.delete_if { |k,v| k =~ /rack./}
 
@@ -64,11 +60,12 @@ helpers do
     job.environment = env
     job.save
 
-    # Determine the response (could be dynamic eventually)
+    # Determine the response (optionally dynamic)
+    processor = Processor.first(:path => env['PATH_INFO'])
     
     response_processor = Johnson::Runtime.new
     response_processor[:response_body] = lambda { |x| response_body = x }
-    response_processor.evaluate("response_body('Request successful')")
+    response_processor.evaluate(processor.response_script)
 
     response_body
   end
