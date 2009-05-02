@@ -4,9 +4,6 @@ require 'spec'
 require 'spec/interop/test'
 require 'sinatra/test'
 
-DataMapper.setup(:default, 'sqlite3::memory:')
-DataMapper.auto_migrate!  
-
 set :environment, :test
 
 describe 'Connector input app:' do
@@ -14,6 +11,7 @@ describe 'Connector input app:' do
   
   before(:each) do
     Job.all.destroy!
+    Processor.all.destroy!
   end
   
   describe 'a processor for the path does not exist' do
@@ -28,7 +26,7 @@ describe 'Connector input app:' do
     before(:each) do
       processor = Processor.new
       processor.path = '/abcd'
-      processor.script = 'return "Hello World!";'
+      processor.script = 'return "Hello world!";'
       processor.save
     end
     
@@ -75,6 +73,28 @@ describe 'Connector input app:' do
       
       response.should be_ok
       response.body.should == 'Hello World!'
+    end
+    
+    it 'does not provide access to the Ruby object in the javascript context' do
+      processor = Processor.first()
+      processor.response_script = "if( !Ruby ){ response_body('A-okay'); }else{ response_body('Houston, we have a Ruby');}"
+      processor.save
+      
+      get '/abcd'
+      
+      response.should be_ok
+      response.body.should == 'A-okay'
+    end
+    
+    it 'returns 200 with an explanation if there is a problem with the response script' do
+      processor = Processor.first()
+      processor.response_script = "this code is not valid javascript!!!"
+      processor.save
+      
+      get '/abcd'
+      
+      response.should be_ok
+      response.body.should == 'The request was registered successfully, but there was a little disagreement building your response. Sorry!'
     end
   end
 end

@@ -6,7 +6,7 @@ require 'json/pure'
 require 'lib/job'
 require 'lib/processor'
 
-DataMapper.setup(:default, 'sqlite3::memory:')
+DataMapper.setup(:default, 'sqlite3::connector_db')
 DataMapper.auto_migrate!
 
 get '/processor/:id' do
@@ -60,14 +60,18 @@ helpers do
     job.environment = env
     job.save
 
-    # Determine the response (optionally dynamic)
-    processor = Processor.first(:path => env['PATH_INFO'])
+    begin  # Determine the response (optionally dynamic)
+      processor = Processor.first(:path => env['PATH_INFO'])
     
-    response_processor = Johnson::Runtime.new
-    response_processor[:response_body] = lambda { |x| response_body = x }
-    response_processor.evaluate(processor.response_script)
+      response_processor = Johnson::Runtime.new
+      response_processor.evaluate("Ruby = null;") # Sandbox it.
+      response_processor[:response_body] = lambda { |x| response_body = x }
+      response_processor.evaluate(processor.response_script)
 
-    response_body
+      response_body
+    rescue
+      response_body = 'The request was registered successfully, but there was a little disagreement building your response. Sorry!'
+    end
   end
 end
 

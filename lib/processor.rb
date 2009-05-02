@@ -3,8 +3,8 @@ class Processor
   
   property :id,               Integer, :serial => true
   property :path,             String, :key => true
+  property :response_script,  String, :default => "response_body('Request successful');"
   property :script,           String
-  property :response_script,  String
 
   def to_s
     string = 'id: ' + self.id.to_s + '/n'
