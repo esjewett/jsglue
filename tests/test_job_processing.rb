@@ -45,7 +45,14 @@ describe 'Job runner class:' do
       job.save
       processor = Processor.new
       processor.path = '/abcd'
-      processor.script = 'request_body("Hello world!");'
+      processor.script = <<-END
+          var boundary = 'TiDHew86xk'
+          var url = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');
+          var req = create_new_request('POST', 'http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');
+          var content_type = 'multipart/form-data';
+          var content_type_options = {'boundary':boundary};
+          var multi_part_body_json = {'title':'Test title', 'body':'Test body'}
+          END
       processor.save
       processor = Processor.new
       processor.path = '/abcdefg'

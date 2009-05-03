@@ -21,52 +21,25 @@ class Runner
       if processor
         
         # If this doesn't work, we still need to get rid of the job (we comment for now so that error bubble up)
-        #begin
-          # Set up our objects
-          request_url_host = String.new
-          request_url_port = String.new
-          request_method = String.new
-        
+        begin
           request_processor = Johnson::Runtime.new
           request_processor.evaluate("Ruby = null;") # Sandbox it.
           
-          boundary = 'TiDHew86xk'
-#          req = create_new_request('POST', 'http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d')
-#          req.body = encode_multipartformdata(boundary, {'title'=>'Test title', 'body'=>'Test body'})
-
+          # Provide the full environment of the request to the processing logic. (It's a hash/json)
+          request_processor[:job_request_env] = job.environment
           
           request_processor[:URI] = URI
-          
-          request_processor[:request_method] = request_method
-#          request_processor[:body] = lambda { |x| req.body = x }
-          request_processor[:encode_multipartformdata] = lambda { |b, p| encode_multipartformdata(b, p) }
-#          request_processor[:set_content_type] = lambda { |x| req.set_content_type(x) }
-          request_processor[:parse_url_host] = lambda { |x| URI.parse(x).host }
-          request_processor[:parse_url_port] = lambda { |x| URI.parse(x).port }
-          request_processor[:request_url_host] = request_url_host
-          request_processor[:request_url_port] = request_url_port
           request_processor[:create_new_request] = lambda { |type, url| create_new_request(type, url) }
 
-          request_processor.evaluate("var url = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');")
-          request_processor.evaluate("var req = create_new_request('POST', 'http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');")
-#          request_processor.evaluate("req.set_content_type('multipart/form-data; boundary=TiDHew86xk');")
-          request_processor.evaluate('req').set_content_type('multipart/form-data', {'boundary'=>'TiDHew86xk'})
-          request_processor.evaluate('req').body = encode_multipartformdata(boundary, {'title'=>'Test title', 'body'=>'Test body'})
-#          request_processor.evaluate("req['body='](encode_multipartformdata('TiDHew86xk', {'title':'Test title', 'body':'Test body'}));")
+          request_processor.evaluate(processor.script)
 
-
-#          request_processor.evaluate("var form_data = {}")
-#          request_processor.evaluate("form_data['title'] = 'Test title';")
-#          request_processor.evaluate("form_data['body'] = 'Test body';")
-#          request_processor.evaluate("body = encode_multipartformdata('TiDHew86xk', form_data);")
-#          request_processor.evaluate("request_url_host = parse_url_host('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');")
-#          request_processor.evaluate("request_url_port = parse_url_port('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');")
-
-#          request_url_host = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d').host
-#          request_url_port = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d').port
+          request_processor.evaluate('req').set_content_type(request_processor.evaluate('content_type'), request_processor.evaluate('content_type_options'))
+          request_processor.evaluate('req').body = encode_multipartformdata(request_processor.evaluate('boundary'), request_processor.evaluate('multi_part_body_json'))
 
           res = Net::HTTP.new(request_processor.evaluate('url').host, request_processor.evaluate('url').port).start {|http| http.request(request_processor.evaluate('req')) }
-        #end
+        rescue
+          # Do nothing - want to fail silently and continue in the event of bad javascript, at least for now.
+        end
       end
       
       job.destroy
