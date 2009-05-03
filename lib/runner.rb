@@ -31,19 +31,30 @@ class Runner
           request_processor.evaluate("Ruby = null;") # Sandbox it.
           
           boundary = 'TiDHew86xk'
-          req = create_new_request('POST', 'http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d')
-          req.body = encode_multipartformdata(boundary, {'title'=>'Test title', 'body'=>'Test body'})
+#          req = create_new_request('POST', 'http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d')
+#          req.body = encode_multipartformdata(boundary, {'title'=>'Test title', 'body'=>'Test body'})
 
+          
+          request_processor[:URI] = URI
+          
           request_processor[:request_method] = request_method
-          request_processor[:body] = lambda { |x| req.body = x }
+#          request_processor[:body] = lambda { |x| req.body = x }
           request_processor[:encode_multipartformdata] = lambda { |b, p| encode_multipartformdata(b, p) }
-          request_processor[:set_content_type] = lambda { |x| req.set_content_type(x) }
+#          request_processor[:set_content_type] = lambda { |x| req.set_content_type(x) }
           request_processor[:parse_url_host] = lambda { |x| URI.parse(x).host }
           request_processor[:parse_url_port] = lambda { |x| URI.parse(x).port }
           request_processor[:request_url_host] = request_url_host
           request_processor[:request_url_port] = request_url_port
           request_processor[:create_new_request] = lambda { |type, url| create_new_request(type, url) }
-          request_processor.evaluate("set_content_type('multipart/form-data; boundary=TiDHew86xk');")
+
+          request_processor.evaluate("var url = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');")
+          request_processor.evaluate("var req = create_new_request('POST', 'http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');")
+#          request_processor.evaluate("req.set_content_type('multipart/form-data; boundary=TiDHew86xk');")
+          request_processor.evaluate('req').set_content_type('multipart/form-data', {'boundary'=>'TiDHew86xk'})
+          request_processor.evaluate('req').body = encode_multipartformdata(boundary, {'title'=>'Test title', 'body'=>'Test body'})
+#          request_processor.evaluate("req['body='](encode_multipartformdata('TiDHew86xk', {'title':'Test title', 'body':'Test body'}));")
+
+
 #          request_processor.evaluate("var form_data = {}")
 #          request_processor.evaluate("form_data['title'] = 'Test title';")
 #          request_processor.evaluate("form_data['body'] = 'Test body';")
@@ -51,10 +62,10 @@ class Runner
 #          request_processor.evaluate("request_url_host = parse_url_host('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');")
 #          request_processor.evaluate("request_url_port = parse_url_port('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');")
 
-          request_url_host = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d').host
-          request_url_port = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d').port
+#          request_url_host = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d').host
+#          request_url_port = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d').port
 
-          res = Net::HTTP.new(request_url_host, request_url_port).start {|http| http.request(req) }
+          res = Net::HTTP.new(request_processor.evaluate('url').host, request_processor.evaluate('url').port).start {|http| http.request(request_processor.evaluate('req')) }
         #end
       end
       
@@ -68,14 +79,14 @@ class Runner
   
   private
   
-  def create_new_request(request_type, url)
-    url = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d')
+  def create_new_request(request_type, url_string)
+    u = URI.parse(url_string)
     
     req = case request_type
-      when 'GET' then Net::HTTP::Get.new(url.path + '?' + url.query)
-      when 'POST' then Net::HTTP::Post.new(url.path + '?' + url.query)
-      when 'PUT' then Net::HTTP::Put.new(url.path + '?' + url.query)
-      when 'DELETE' then Net::HTTP::Delete.new(url.path + '?' + url.query)
+      when 'GET' then Net::HTTP::Get.new(u.path + '?' + u.query)
+      when 'POST' then Net::HTTP::Post.new(u.path + '?' + u.query)
+      when 'PUT' then Net::HTTP::Put.new(u.path + '?' + u.query)
+      when 'DELETE' then Net::HTTP::Delete.new(u.path + '?' + u.query)
     end
   end
   
