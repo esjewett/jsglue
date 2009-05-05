@@ -2,7 +2,7 @@ require 'rubygems'
 require 'json/pure'
 require 'connector'
 require 'spec'
-#require 'spec/interop/test'
+require 'spec/interop/test'
 require 'sinatra/test'
 
 describe 'Processor maintenance app:' do

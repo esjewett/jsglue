@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'connector'
 require 'spec'
-#require 'spec/interop/test'
+require 'spec/interop/test'
 require 'sinatra/test'
 
 set :environment, :test
