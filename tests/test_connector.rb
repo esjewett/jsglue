@@ -45,17 +45,21 @@ describe 'Connector input app:' do
       initial_length.should < Job.all.length
     end
   
-    it 'stores the environment on the stack properly' do
-    
-      # We'll test that query parameters get passed in correctly
-    
+    it 'stores the environment query string on the stack properly' do
       get '/abcd?test=query_test'
       response.should be_ok
     
-      job = Job.all.pop
+      job = Job.first
     
       job.environment['QUERY_STRING'].should == 'test=query_test'
-      job.environment.class.should == Hash
+    end
+    
+    it 'stores the environment body on the stack properly' do
+      post '/abcd?test=query_test', '{some:json}'
+      response.should be_ok
+      
+      job = Job.first
+      job.environment['BODY'].should == '{some:json}'
     end
   end
     

@@ -52,6 +52,7 @@ describe 'Job runner class:' do
           var content_type = 'multipart/form-data';
           var content_type_options = {'boundary':boundary};
           var multi_part_body_json = {'title':'Test title', 'body':'Test body'}
+          var body = encode_multi_part_form_data(boundary, multi_part_body_json);
           END
       processor.save
       processor = Processor.new

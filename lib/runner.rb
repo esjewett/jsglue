@@ -30,12 +30,13 @@ class Runner
           
           request_processor[:URI] = URI
           request_processor[:create_new_request] = lambda { |type, url| create_new_request(type, url) }
+          request_processor[:encode_multi_part_form_data] = lambda { |boundary, body| encode_multipartformdata(boundary, body) }
 
           request_processor.evaluate(processor.script)
 
           request_processor.evaluate('req').set_content_type(request_processor.evaluate('content_type'), request_processor.evaluate('content_type_options'))
-          request_processor.evaluate('req').body = encode_multipartformdata(request_processor.evaluate('boundary'), request_processor.evaluate('multi_part_body_json'))
-
+          request_processor.evaluate('req').body = request_processor.evaluate('body')
+          
           res = Net::HTTP.new(request_processor.evaluate('url').host, request_processor.evaluate('url').port).start {|http| http.request(request_processor.evaluate('req')) }
         rescue
           # Do nothing - want to fail silently and continue in the event of bad javascript, at least for now.

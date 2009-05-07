@@ -49,6 +49,12 @@ end
 helpers do
   def handle_request(env)
 
+    # Convert the input/body into a string so that we can marshall it into the database
+    env['BODY'] = String.new
+    while s = env['rack.input'].gets
+      env['BODY'] += s
+    end
+
     # Drop all "rack." keys from env Hash (drops StringIO types that don't marshal)
     env.delete_if { |k,v| k =~ /rack./}
 
