@@ -29,7 +29,12 @@ class Runner
           request_processor[:job_request_env] = job.environment
           
           request_processor[:URI] = URI
-          request_processor[:create_new_request] = lambda { |type, url| create_new_request(type, url) }
+          request_processor[:NetHTTP] = Net::HTTP
+          request_processor[:NetHTTPGet] = Net::HTTP::Get
+          request_processor[:NetHTTPPost] = Net::HTTP::Post
+          request_processor[:NetHTTPPut] = Net::HTTP::Put
+          request_processor[:NetHTTPDelete] = Net::HTTP::Delete
+
           request_processor[:encode_multi_part_form_data] = lambda { |boundary, body| encode_multipartformdata(boundary, body) }
 
           request_processor.evaluate(processor.script)
@@ -53,16 +58,16 @@ class Runner
   
   private
   
-  def create_new_request(request_type, url_string)
-    u = URI.parse(url_string)
-    
-    req = case request_type
-      when 'GET' then Net::HTTP::Get.new(u.path + '?' + u.query)
-      when 'POST' then Net::HTTP::Post.new(u.path + '?' + u.query)
-      when 'PUT' then Net::HTTP::Put.new(u.path + '?' + u.query)
-      when 'DELETE' then Net::HTTP::Delete.new(u.path + '?' + u.query)
-    end
-  end
+#  def create_new_request(request_type, url_string)
+#    u = URI.parse(url_string)
+#    
+#    req = case request_type
+#      when 'GET' then Net::HTTP::Get.new(u.path + '?' + u.query)
+#      when 'POST' then Net::HTTP::Post.new(u.path + '?' + u.query)
+#      when 'PUT' then Net::HTTP::Put.new(u.path + '?' + u.query)
+#      when 'DELETE' then Net::HTTP::Delete.new(u.path + '?' + u.query)
+#    end
+#  end
   
   def encode_multipartformdata(boundary, parameters = {})
     ret = String.new
