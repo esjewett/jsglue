@@ -46,13 +46,16 @@ describe 'Job runner class:' do
       processor = Processor.new
       processor.path = '/abcd'
       processor.script = <<-END
+          var reqs = [];
+          var req_hash = {};
           var boundary = 'TiDHew86xk'
-          var url = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');
-          var req = NetHTTPPost.new(url.path + '?' +  url.query);
-          var content_type = 'multipart/form-data';
-          var content_type_options = {'boundary':boundary};
+          req_hash['url'] = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');
+          req_hash['request'] = NetHTTPPost.new(req_hash['url'].path + '?' +  req_hash['url'].query);
+          req_hash['content_type'] = 'multipart/form-data';
+          req_hash['content_type_options'] = {'boundary':boundary};
           var multi_part_body_json = {'title':'Test title', 'body':'Test body'}
-          var body = encode_multi_part_form_data(boundary, multi_part_body_json);
+          req_hash['body'] = encode_multi_part_form_data(boundary, multi_part_body_json);
+          reqs[0] = req_hash;
           END
       processor.save
       processor = Processor.new
@@ -63,6 +66,6 @@ describe 'Job runner class:' do
     
     it 'looks up the corresponding processor and evaluates the javascript code' do
       Runner.new.process
-    end
+    end 
   end
 end
