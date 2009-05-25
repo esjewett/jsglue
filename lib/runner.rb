@@ -43,17 +43,18 @@ class Runner
           request_processor[:NetHTTPPut] = Net::HTTP::Put
           request_processor[:NetHTTPDelete] = Net::HTTP::Delete
 
+          # Helpers
           request_processor[:encode_multi_part_form_data] = lambda { |boundary, body| encode_multipartformdata(boundary, body) }
+          request_processor[:set_request_body] = lambda { |request, body| set_request_body(request, body) }
 
           request_processor.evaluate(processor.script)
           
           request_processor.evaluate('reqs').each do |req_hash|
             req_hash['request'].set_content_type(req_hash['content_type'], req_hash['content_type_options'])
-            req_hash['request'].body = req_hash['body']
             Net::HTTP.new(req_hash['url'].host, req_hash['url'].port).start {|http|
               http.request(req_hash['request'])
             }
-          end
+          end 
 
           #request_processor.evaluate('req').set_content_type(request_processor.evaluate('content_type'), request_processor.evaluate('content_type_options'))
           #request_processor.evaluate('req').body = request_processor.evaluate('body')
@@ -95,5 +96,9 @@ class Runner
       end
     end
     ret << "\r\n--" << boundary << "--\r\n"
+  end
+  
+  def set_request_body(request, body)
+    request.body = body
   end
 end

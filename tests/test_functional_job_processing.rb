@@ -44,6 +44,7 @@ describe "When it receives a sample request from Yahoo! Pipes for forwarding to 
         req_hash['content_type_options'] = {'boundary':boundary};
         var multi_part_body_json = {'title':title, 'body':body}
         req_hash['body'] = encode_multi_part_form_data(boundary, multi_part_body_json);
+        set_request_body(req_hash['request'], req_hash['body']);
         reqs[0] = req_hash;
         END
     processor.save
