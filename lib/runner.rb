@@ -13,6 +13,21 @@ class Runner
   # {'request' => ?, 'url' => ?}
   # where the value of 'request' inherits from a Net::HTTP::GenericRequest object,
   # and the value of 'url' is the URL to which the request is sent.
+  #
+  # Javascript processor has access to the following helper classes from the Ruby standard library:
+  #   URI - URI class
+  #   NetHTTP - Net::HTTP class
+  #   NetHTTPGet - Net::HTTP::Get class (also NetHTTPPost, NetHTTPPut, and NetHTTPDelete for corresponding classes)
+  #
+  # The following variables are provided:
+  #   job_request_env - the complete environment passed from the original request, as a Hash (Rack format), 
+  #                     with input stream converted to a string and stored with hash key 'BODY'.
+  #
+  # And the following helper functions:
+  #   encode_multipartformdata(boundary, body) - takes a 'boundary' string and a 'body' hash with values to be
+  #                                              concatenated in multi-part format.
+  #   set_request_body(request, body) - calls the .body= method of the 'request' passed in with 'body' as the value
+  #   set_request_content_type(request, content_type, content_type_options) - facade of NetHTTPGenericRequest.set_content_type
   
   def process
     job = Job.first
@@ -48,16 +63,10 @@ class Runner
           request_processor.evaluate(processor.script)
           
           request_processor.evaluate('reqs').each do |req_hash|
-            #req_hash['request'].set_content_type(req_hash['content_type'], req_hash['content_type_options'])
             Net::HTTP.new(req_hash['url'].host, req_hash['url'].port).start {|http|
               http.request(req_hash['request'])
             }
           end 
-
-          #request_processor.evaluate('req').set_content_type(request_processor.evaluate('content_type'), request_processor.evaluate('content_type_options'))
-          #request_processor.evaluate('req').body = request_processor.evaluate('body')
-          
-          #res = Net::HTTP.new(request_processor.evaluate('url').host, request_processor.evaluate('url').port).start {|http| http.request(request_processor.evaluate('req')) }
         rescue
           # Do nothing - want to fail silently and continue in the event of bad javascript, at least for now.
         end
@@ -72,17 +81,6 @@ class Runner
   end
   
   private
-  
-#  def create_new_request(request_type, url_string)
-#    u = URI.parse(url_string)
-#    
-#    req = case request_type
-#      when 'GET' then Net::HTTP::Get.new(u.path + '?' + u.query)
-#      when 'POST' then Net::HTTP::Post.new(u.path + '?' + u.query)
-#      when 'PUT' then Net::HTTP::Put.new(u.path + '?' + u.query)
-#      when 'DELETE' then Net::HTTP::Delete.new(u.path + '?' + u.query)
-#    end
-#  end
   
   def encode_multipartformdata(boundary, parameters = {})
     ret = String.new
