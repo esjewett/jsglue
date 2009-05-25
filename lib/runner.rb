@@ -10,11 +10,8 @@ DataMapper.setup(:default, 'sqlite3::connector_db')
 class Runner
   
   # Expect javascript processor to return an array 'reqs' of hashes of the form:
-  # {'request' => ?, 'content_type' => ?, 'content_type_options' => ?, 'body' => ?, 'url' => ?}
+  # {'request' => ?, 'url' => ?}
   # where the value of 'request' inherits from a Net::HTTP::GenericRequest object,
-  # the value of 'content_type' is a string specifying the HTTP content type,
-  # the value of 'content_type_options' is hash of options,
-  # the value of 'body' is a string,
   # and the value of 'url' is the URL to which the request is sent.
   
   def process
@@ -46,11 +43,12 @@ class Runner
           # Helpers
           request_processor[:encode_multi_part_form_data] = lambda { |boundary, body| encode_multipartformdata(boundary, body) }
           request_processor[:set_request_body] = lambda { |request, body| set_request_body(request, body) }
+          request_processor[:set_request_content_type] = lambda { |request, content_type, content_type_options| set_request_content_type(request, content_type, content_type_options) }
 
           request_processor.evaluate(processor.script)
           
           request_processor.evaluate('reqs').each do |req_hash|
-            req_hash['request'].set_content_type(req_hash['content_type'], req_hash['content_type_options'])
+            #req_hash['request'].set_content_type(req_hash['content_type'], req_hash['content_type_options'])
             Net::HTTP.new(req_hash['url'].host, req_hash['url'].port).start {|http|
               http.request(req_hash['request'])
             }
@@ -100,5 +98,9 @@ class Runner
   
   def set_request_body(request, body)
     request.body = body
+  end
+  
+  def set_request_content_type(request, content_type, content_type_options)
+    request.set_content_type(content_type, content_type_options)
   end
 end

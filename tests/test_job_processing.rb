@@ -51,8 +51,7 @@ describe 'Job runner class:' do
           var boundary = 'TiDHew86xk'
           req_hash['url'] = URI.parse('http://api.tarpipe.net/1.0/?key=f9d8e2df8b7ba57a4dd7e490b60d961d');
           req_hash['request'] = NetHTTPPost.new(req_hash['url'].path + '?' +  req_hash['url'].query);
-          req_hash['content_type'] = 'multipart/form-data';
-          req_hash['content_type_options'] = {'boundary':boundary};
+          set_request_content_type(req_hash['request'], 'multipart/form-data', {'boundary':boundary})
           var multi_part_body_json = {'title':'Test title', 'body':'Test body'}
           req_hash['body'] = encode_multi_part_form_data(boundary, multi_part_body_json);
           set_request_body(req_hash['request'], req_hash['body']);
